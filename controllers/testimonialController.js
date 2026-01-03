@@ -4,7 +4,7 @@ const Testimonial = require("../models/Testimonials");
 exports.createTestimonial = async (req, res) => {
   try {
     const { author, content } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : ""; // Simpan path gambar
+    const image = req.file ? req.file.path : ""; // Cloudinary URL
 
     const newTestimonial = new Testimonial({ author, content, image });
     await newTestimonial.save();
@@ -19,7 +19,7 @@ exports.createTestimonial = async (req, res) => {
 exports.updateTestimonial = async (req, res) => {
   try {
     const { author, content } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : req.body.image; // Gunakan gambar baru jika ada
+    const image = req.file ? req.file.path : req.body.image; // Cloudinary URL
 
     const updatedTestimonial = await Testimonial.findByIdAndUpdate(
       req.params.id,

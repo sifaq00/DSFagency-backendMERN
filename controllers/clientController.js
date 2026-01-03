@@ -4,7 +4,7 @@ const Client = require("../models/Client");
 exports.createClient = async (req, res) => {
   try {
     const { name } = req.body;
-    const logo = req.file ? `/uploads/${req.file.filename}` : ""; // Simpan path logo
+    const logo = req.file ? req.file.path : ""; // Cloudinary mengembalikan path sebagai URL
 
     if (!logo) {
       return res.status(400).json({ message: "Logo harus diupload" });
@@ -23,7 +23,7 @@ exports.createClient = async (req, res) => {
 exports.updateClient = async (req, res) => {
   try {
     const { name } = req.body;
-    const logo = req.file ? `/uploads/${req.file.filename}` : req.body.logo; // Gunakan logo baru jika ada
+    const logo = req.file ? req.file.path : req.body.logo; // Gunakan logo baru jika ada
 
     const updatedClient = await Client.findByIdAndUpdate(
       req.params.id,

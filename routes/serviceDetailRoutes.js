@@ -4,15 +4,15 @@ const {
   createServiceDetail,
   updateServiceDetail,
   deleteServiceDetail,
-  upload,
 } = require("../controllers/serviceDetailController");
 const authMiddleware = require("../middleware/authMiddleware");
+const { uploadServiceDetail } = require("../config/cloudinary");
 
 const router = express.Router();
 
 router.get("/", getServiceDetails);
-router.post("/", authMiddleware, upload.single("image"), createServiceDetail); // Pastikan upload.single("image") digunakan
-router.put("/:id", authMiddleware, upload.single("image"), updateServiceDetail); // Pastikan upload.single("image") digunakan
+router.post("/", authMiddleware, uploadServiceDetail.single("image"), createServiceDetail);
+router.put("/:id", authMiddleware, uploadServiceDetail.single("image"), updateServiceDetail);
 router.delete("/:id", authMiddleware, deleteServiceDetail);
 
 module.exports = router;

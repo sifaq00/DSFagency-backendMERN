@@ -1,18 +1,4 @@
 const ServiceDetail = require("../models/ServiceDetail");
-const multer = require("multer");
-const path = require("path");
-
-// Konfigurasi Multer untuk upload gambar
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Pastikan folder "uploads" ada di root project
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Format nama file
-  },
-});
-
-const upload = multer({ storage });
 
 // Get all service details
 exports.getServiceDetails = async (req, res) => {
@@ -33,7 +19,7 @@ exports.createServiceDetail = async (req, res) => {
       return res.status(400).json({ message: "Judul dan deskripsi harus diisi" });
     }
 
-    const image = req.file ? `/uploads/${req.file.filename}` : ""; // Simpan path gambar
+    const image = req.file ? req.file.path : ""; // Cloudinary URL
     const newServiceDetail = new ServiceDetail({ title, description, image });
     await newServiceDetail.save();
 
@@ -48,7 +34,7 @@ exports.createServiceDetail = async (req, res) => {
 exports.updateServiceDetail = async (req, res) => {
   try {
     const { title, description } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : req.body.image; // Gunakan gambar baru jika ada
+    const image = req.file ? req.file.path : req.body.image; // Cloudinary URL
 
     const updatedServiceDetail = await ServiceDetail.findByIdAndUpdate(
       req.params.id,
@@ -81,6 +67,3 @@ exports.deleteServiceDetail = async (req, res) => {
     res.status(500).json({ message: "Gagal menghapus service detail" });
   }
 };
-
-// Export upload untuk digunakan di routes
-exports.upload = upload;
