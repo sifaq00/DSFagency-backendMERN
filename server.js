@@ -24,6 +24,7 @@ const valuesRoutes = require("./routes/valuesRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
 const serviceCardRoutes = require("./routes/serviceCardRoutes");
 const serviceDetailRoutes = require("./routes/serviceDetailRoutes");
+const clientRoutes = require("./routes/clientRoutes");
 
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
@@ -32,6 +33,7 @@ app.use("/api/values", valuesRoutes);
 app.use("/api/testimonial", testimonialRoutes);
 app.use("/api/service-card", serviceCardRoutes);
 app.use("/api/service-detail", serviceDetailRoutes);
+app.use("/api/client", clientRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
