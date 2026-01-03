@@ -1,4 +1,5 @@
 const Contact = require("../models/Contact");
+const { sendReplyEmail } = require("../config/email");
 
 // Get all contacts (admin)
 const getContacts = async (req, res) => {
@@ -53,24 +54,53 @@ const markAsRead = async (req, res) => {
   }
 };
 
-// Reply to contact
+// Reply to contact (with email notification)
 const replyContact = async (req, res) => {
   try {
     const { replyMessage } = req.body;
-    const contact = await Contact.findByIdAndUpdate(
+    
+    // Get contact first to get user's email
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ message: "Pesan tidak ditemukan" });
+    }
+    
+    // Send email to user
+    let emailSent = false;
+    try {
+      await sendReplyEmail({
+        to: contact.email,
+        userName: contact.name,
+        originalMessage: contact.message,
+        replyMessage: replyMessage,
+      });
+      emailSent = true;
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError.message);
+      // Continue even if email fails - still save the reply
+    }
+    
+    // Update contact with reply
+    const updatedContact = await Contact.findByIdAndUpdate(
       req.params.id,
       { 
         isReplied: true, 
         repliedAt: new Date(),
-        replyMessage 
+        replyMessage,
+        emailSent 
       },
       { new: true }
     );
-    if (!contact) {
-      return res.status(404).json({ message: "Pesan tidak ditemukan" });
-    }
-    res.json(contact);
+    
+    res.json({ 
+      contact: updatedContact, 
+      emailSent,
+      message: emailSent 
+        ? "Balasan berhasil dikirim ke email user!" 
+        : "Balasan disimpan, tapi gagal mengirim email."
+    });
   } catch (error) {
+    console.error("Reply error:", error);
     res.status(500).json({ message: "Gagal membalas pesan" });
   }
 };

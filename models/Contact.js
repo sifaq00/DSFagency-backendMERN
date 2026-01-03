@@ -11,6 +11,7 @@ const ContactSchema = new mongoose.Schema(
     isReplied: { type: Boolean, default: false },
     repliedAt: { type: Date },
     replyMessage: { type: String },
+    emailSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
