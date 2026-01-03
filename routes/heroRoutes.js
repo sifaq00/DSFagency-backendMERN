@@ -4,13 +4,13 @@ const { getHero, updateHero } = require("../controllers/heroController");
 const authMiddleware = require("../middleware/authMiddleware");
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const cloudinary = require("../config/cloudinary");
+const { cloudinary } = require("../config/cloudinary");
 
 // Cloudinary storage for hero images
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "hero",
+    folder: "dfs-hero",
     allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
     transformation: [{ width: 800, height: 800, crop: "limit", quality: "auto" }],
   },

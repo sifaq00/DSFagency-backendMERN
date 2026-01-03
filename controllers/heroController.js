@@ -1,5 +1,5 @@
 const Hero = require("../models/Hero");
-const cloudinary = require("../config/cloudinary");
+const { cloudinary } = require("../config/cloudinary");
 
 // Get hero content (public)
 const getHero = async (req, res) => {
