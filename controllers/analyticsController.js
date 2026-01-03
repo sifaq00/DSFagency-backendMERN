@@ -13,6 +13,46 @@ const getMostRecentDate = (...dates) => {
   return validDates.sort((a, b) => b - a)[0];
 };
 
+// Parse user agent to detect device, browser, and OS
+const parseUserAgent = (userAgent) => {
+  const ua = userAgent.toLowerCase();
+  
+  // Detect device type
+  let device = "desktop";
+  if (/mobile|android|iphone|ipod|blackberry|windows phone/i.test(ua)) {
+    device = "mobile";
+  } else if (/tablet|ipad/i.test(ua)) {
+    device = "tablet";
+  }
+  
+  // Detect browser
+  let browser = "unknown";
+  if (ua.includes("edg/")) browser = "Edge";
+  else if (ua.includes("chrome")) browser = "Chrome";
+  else if (ua.includes("firefox")) browser = "Firefox";
+  else if (ua.includes("safari")) browser = "Safari";
+  else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera";
+  
+  // Detect OS
+  let os = "unknown";
+  if (ua.includes("windows")) os = "Windows";
+  else if (ua.includes("mac")) os = "macOS";
+  else if (ua.includes("linux")) os = "Linux";
+  else if (ua.includes("android")) os = "Android";
+  else if (ua.includes("iphone") || ua.includes("ipad")) os = "iOS";
+  
+  return { device, browser, os };
+};
+
+// Get client IP address
+const getClientIP = (req) => {
+  return req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+         req.headers["x-real-ip"] ||
+         req.connection?.remoteAddress ||
+         req.socket?.remoteAddress ||
+         "unknown";
+};
+
 const buildDateBuckets = (days) => {
   const buckets = [];
   const today = new Date();
@@ -61,6 +101,9 @@ const getAnalytics = async (req, res) => {
       latestClient,
       latestUser,
       pageViews,
+      uniqueVisitors,
+      deviceStats,
+      browserStats,
     ] = await Promise.all([
       User.countDocuments(),
       Client.countDocuments(),
@@ -71,6 +114,7 @@ const getAnalytics = async (req, res) => {
       Values.countDocuments(),
       Client.findOne().sort({ updatedAt: -1 }).select("updatedAt"),
       User.findOne().sort({ updatedAt: -1 }).select("updatedAt"),
+      // Total views per day
       PageView.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
         {
@@ -80,6 +124,24 @@ const getAnalytics = async (req, res) => {
           },
         },
         { $sort: { _id: 1 } },
+      ]),
+      // Unique visitors count (by visitorId)
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: startDate }, visitorId: { $ne: "" } } },
+        { $group: { _id: "$visitorId" } },
+        { $count: "total" },
+      ]),
+      // Device breakdown
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: startDate } } },
+        { $group: { _id: "$device", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      // Browser breakdown
+      PageView.aggregate([
+        { $match: { createdAt: { $gte: startDate }, browser: { $ne: "" } } },
+        { $group: { _id: "$browser", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
       ]),
     ]);
 
@@ -95,6 +157,9 @@ const getAnalytics = async (req, res) => {
       if (bucket) bucket.count = item.count;
     });
 
+    // Calculate total views
+    const totalViews = buckets.reduce((sum, b) => sum + b.count, 0);
+
     res.json({
       totals: {
         users: userCount,
@@ -109,8 +174,21 @@ const getAnalytics = async (req, res) => {
       },
       lastUpdated: lastUpdated ? lastUpdated.toISOString() : null,
       traffic: buckets,
+      visitorStats: {
+        totalViews,
+        uniqueVisitors: uniqueVisitors[0]?.total || 0,
+        devices: deviceStats.reduce((acc, d) => {
+          if (d._id) acc[d._id] = d.count;
+          return acc;
+        }, {}),
+        browsers: browserStats.reduce((acc, b) => {
+          if (b._id) acc[b._id] = b.count;
+          return acc;
+        }, {}),
+      },
     });
   } catch (error) {
+    console.error("Analytics error:", error);
     res.status(500).json({ message: "Gagal memuat data analytics" });
   }
 };
@@ -118,7 +196,20 @@ const getAnalytics = async (req, res) => {
 const trackVisit = async (req, res) => {
   try {
     const path = req.body?.path || "/";
-    await PageView.create({ path, userAgent: req.headers["user-agent"] || "" });
+    const visitorId = req.body?.visitorId || "";
+    const userAgent = req.headers["user-agent"] || "";
+    const ip = getClientIP(req);
+    const { device, browser, os } = parseUserAgent(userAgent);
+    
+    await PageView.create({ 
+      path, 
+      userAgent,
+      visitorId,
+      ip,
+      device,
+      browser,
+      os,
+    });
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ message: "Gagal mencatat kunjungan" });
