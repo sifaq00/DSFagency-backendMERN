@@ -17,12 +17,26 @@ const buildDateBuckets = (days) => {
   const buckets = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  
+  // Tentukan format label berdasarkan periode
+  let labelFormat;
+  if (days <= 31) {
+    // 14 hari atau 1 bulan: tampilkan tanggal dan bulan singkat (misal: "01 Jan")
+    labelFormat = { day: "2-digit", month: "short" };
+  } else if (days <= 180) {
+    // 6 bulan: tampilkan bulan dan tahun (misal: "Jan 2026")
+    labelFormat = { month: "short", year: "numeric" };
+  } else {
+    // 1 tahun: tampilkan bulan saja (misal: "Jan")
+    labelFormat = { month: "short" };
+  }
+  
   for (let i = days - 1; i >= 0; i -= 1) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     buckets.push({
       key: d.toISOString().slice(0, 10),
-      label: d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" }),
+      label: d.toLocaleDateString("id-ID", labelFormat),
       count: 0,
     });
   }
@@ -31,7 +45,7 @@ const buildDateBuckets = (days) => {
 
 const getAnalytics = async (req, res) => {
   try {
-    const days = 14;
+    const days = parseInt(req.query.days) || 14;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - (days - 1));
     startDate.setHours(0, 0, 0, 0);
