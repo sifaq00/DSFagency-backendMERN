@@ -2,11 +2,14 @@ const mongoose = require("mongoose");
 
 const HeroSchema = new mongoose.Schema(
   {
-    headline: { type: String, default: "Transform Your Digital Presence" },
-    subheadline: { type: String, default: "We craft stunning websites and digital experiences" },
-    ctaText: { type: String, default: "Hubungi Kami" },
+    badgeText: { type: String, default: "Digital Marketing Agency" },
+    headline: { type: String, default: "Grow Your Digital Business" },
+    subheadline: { type: String, default: "Solusi Digital Marketing profesional untuk UMKM dan bisnis yang ingin berkembang lebih cepat dan terukur." },
+    ctaText: { type: String, default: "Get Started" },
     ctaLink: { type: String, default: "#Contacts" },
-    backgroundImage: { type: String, default: "" },
+    secondaryCtaText: { type: String, default: "Learn More" },
+    secondaryCtaLink: { type: String, default: "#About" },
+    heroImage: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
